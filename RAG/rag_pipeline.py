@@ -32,6 +32,8 @@ def qa():
         print("--- Your Question Below (Enter '/end' to process input OR '/bye' to exit) ---")
 
         lines = []
+        showSource = false
+        
         while True:
             line = input()
 
@@ -39,6 +41,10 @@ def qa():
                 return
 
             if line.lower() == '/end':
+                break
+
+            if line.lower() =='/end-t':
+                showSource = True
                 break
 
             lines.append(line)
@@ -51,8 +57,9 @@ def qa():
 
         print(f"\n--- AI Response ---\n{response}")
 
-        print("\n\n---- AI Sources ----")
-        for node in response.source_nodes:
-            print(f"- {node.text} \n(Relevance Score: {node.score:.4f})")
+        if showSource:
+            print("\n\n---- AI Sources ----")
+            for node in response.source_nodes:
+                print(f"- {node.text} \n(Relevance Score: {node.score:.4f})")
 
         print("\n")
