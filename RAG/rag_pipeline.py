@@ -32,8 +32,8 @@ def qa():
         print("--- Your Question Below (Enter '/end' to process input OR '/bye' to exit) ---")
 
         lines = []
-        showSource = false
-        
+        showSource = False
+
         while True:
             line = input()
 
