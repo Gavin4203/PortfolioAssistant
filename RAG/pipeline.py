@@ -19,7 +19,7 @@ USER_DATA = os.environ['USER_DATA']
 class pipeline:
     def __init__(self):
         # set the models
-        Settings.llm = Ollama(model="llama3.1:8b", request_timeout=120.0)
+        #Settings.llm = Ollama(model="llama3.1:8b", request_timeout=120.0)
         Settings.embed_model = OllamaEmbedding(model_name="nomic-embed-text")
         Settings.chunk_size = 512
 
@@ -42,5 +42,5 @@ class pipeline:
         return (
             f"{chunks}\n\n"
             "--- END OF PORTFOLIO DATA ---\n"
-            "SYSTEM NOTE: If the user asked for a cover letter, you MUST now call the `md_to_odt` tool with the complete letter."
+            "Highlight the candidate's real projects above and connect them to the user's request."
         )

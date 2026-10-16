@@ -21,20 +21,37 @@ from .State import State
 class agent:
     def __init__(self):
         self.model = "llama3.1:8b"
+        self.user_name = "Gavin Higgins"
+
         self.system_instructions = (
-            "You are an advanced AI career assistant. Your goal is to help the user with resumes and cover letters, "
-            "making their real skills shine without fabricating experience.\n"
-            "You have access to system tools. To understand how to use the tools, you must look into docstrings.\n"
-            "You will call tools, you will not be returning JSON that is used in the tools"
+            f"You are an expert, supportive career assistant helping {self.user_name} land job roles.\n\n"
+            "When calling a tool, do not use a preamble. Just call the tool directly.\n\n"
+            "CORE WORKFLOW RULES:\n"
+            f"1. FACTUAL GROUNDING: Always look up {self.user_name}'s actual background, skills, and work history first using `search_query` before answering specific job questions, drafting cover letters, or building resumes. Never invent experience.\n\n"
+            f"- When searching, use a precise, short query focusing strictly on core {self.user_name}'s skills, experience, and work history"
+            "- Never stuff job description buzzwords into the search query."
+            "2. DIRECT TONE: Write in a clear, natural, impact-driven tone highlighting concrete achievements.\n"
+            "3. NO PLACEHOLDERS: Never output bracketed placeholders like [Company Name] or [Current Company].\n\n"
+            "OUTPUT FORMAT ROUTING:\n"
+            "- **General Questions / Job-Fit Ratings:** Reply normally in chat after searching.\n"
+            "- **Cover Letters:** Wrap the ENTIRE cover letter inside `<cover_letter>` and `</cover_letter>` tags using this structure:\n"
+            "  <cover_letter>\n"
+            "  Dear Hiring Manager,\n\n"
+            "  [Paragraph 1: Hook connecting the role and company to core strengths]\n\n"
+            "  [Paragraph 2: Concrete projects and tools from search_query]\n\n"
+            "  [Paragraph 3: Transferable skills aligning with company mission and closing]\n\n"
+            "  Sincerely,\n\n"
+            f"  {self.user_name}\n"
+            "  </cover_letter>\n\n"
+            "- **Resumes (Future Use):** When requested, wrap the resume inside `<resume>` and `</resume>` tags."
         )
-        self.tools = [cv.md_to_odt, search_query]
+
+        self.tools = [search_query]
         self.llm = ChatOllama(
             model=self.model,
-            temperature=0.1,
+            temperature=0,
             num_ctx=8192,       #Prevents Ollama's default 2048 token wrap-around
-            repeat_penalty=1.15 #Stops the model from looping on \n or repeated phrases
         )
-        self.llm_with_tools = self.llm.bind_tools(self.tools)
 
         self.app = self.compile_workflow()
 
@@ -60,15 +77,51 @@ class agent:
 
 
     def agent_node(self, state: State):
-        """Calls the LLM with the current conversation history"""
-        response = self.llm_with_tools.invoke(state["messages"])
+        """Calls the LLM with the current conversation history and enforces tool ordering"""
+        messages = state["messages"]
+
+        # 1. Find messages generated after the most recent user prompt
+        recent_messages = []
+        for msg in reversed(messages):
+            if msg.type == "human":
+                break
+            recent_messages.append(msg)
+
+        # 2. Check if 'search_query' has succeeded this turn
+        has_searched_this_turn = any(
+            msg.type == "tool"
+            and getattr(msg, "name", "") == "search_query"
+            and not str(msg.content).startswith("Error")
+            for msg in recent_messages
+        )
+
+        # 3. Bind search_query on Turn 1; unbind all tools on Turn 2+
+        sys_msg = SystemMessage(content=self.system_instructions)
+        if not has_searched_this_turn:
+            active_llm = self.llm.bind_tools([search_query])
+            response = active_llm.invoke([sys_msg] + messages)
+        else:
+            # Zero tools bound = Zero JSON risk! Pure prose generation.
+            response = self.llm.invoke([sys_msg] + messages)
+
+            # 4. Deterministic Python Post-Processor for Cover Letters
+            content = response.content
+            tag_match = re.search(
+                r"<cover_letter>(.*?)</cover_letter>",
+                content,
+                flags=re.DOTALL | re.IGNORECASE,
+            )
+
+            if tag_match:
+                letter_text = tag_match.group(1).strip()
+                cv.md_to_odt(letter_text)
+                response.content = f"{letter_text}"
 
         return {"messages": [response]}
 
     def speak_to_it(self, q):
         q_state = {
             "messages": [
-                SystemMessage(content=self.system_instructions),
                 HumanMessage(content=q),
             ]
         }

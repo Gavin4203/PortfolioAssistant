@@ -4,17 +4,15 @@ from langchain_core.tools import tool
 user_db = pipeline()
 
 @tool
-def search_query(query):
+def search_query(query: str):
     """
-        Searches the user's personal portfolio, resume, and project history.
-        Use this ONLY to look up facts about the user's skills, projects, and work experience.
-        NEVER use this tool to draft cover letters or search for external company reviews.
+    Queries the user's portfolio database for factual details on their background, projects, skills, and work history.
 
-        Args:
-            query: A specific search phrase (e.g., "Python and backend experience" or "list all software projects")
+    Args:
+        query: A short, 3-to-5 word technical search phrase (e.g., "C# ASP.NET projects", "backend development and Python").
     """
 
     # LlamaIndex will embed, search, and generate a response here
-    response = user_db.search_portfolio(search_query)
+    response = user_db.search_portfolio(query)
 
     return str(response)

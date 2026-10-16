@@ -9,8 +9,10 @@ def get_linux_path(filename):
             [
                 "zenity",
                 "--file-selection",
-                "--directory",
-                "--title=Select Destination Folder"
+                "--save",
+                "--file-filter= LibreOffice .odt | *.odt",
+                f"--filename={filename}",
+                "--title=Saving File"
             ],
             capture_output=True,
             text=True
