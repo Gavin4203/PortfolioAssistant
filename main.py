@@ -1,6 +1,6 @@
 from dotenv import load_dotenv
 load_dotenv()
-from RAG import rag_setup, rag_pipeline
+from RAG.pipeline import user_db
 from LLM import llm_agent
 
 agent = llm_agent.agent()
@@ -13,9 +13,7 @@ if run_rag_setup == "y":
     overwrite = input("Overwrite ALL Data (Y/n)\n > ").lower()
     overwrite = overwrite == "y"
 
-    rag_setup.setup(overwrite)
-
-#rag_pipeline.qa()
+    user_db.data_pop(overwrite)
 
 def main():
     while True:
@@ -28,6 +26,7 @@ def main():
             line = input()
 
             if line.lower() == '/bye':
+                user_db.client.close()
                 return
 
             if line.lower() == '/end':

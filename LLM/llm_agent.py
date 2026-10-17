@@ -29,7 +29,7 @@ class agent:
             "CORE WORKFLOW RULES:\n"
             f"1. FACTUAL GROUNDING: Always look up {self.user_name}'s actual background, skills, and work history first using `search_query` before answering specific job questions, drafting cover letters, or building resumes.\n"
             f"   - When calling `search_query`, pass ONLY general portfolio terms like 'software engineering projects and work history'. NEVER include the employer's industry (like loans, finance, or healthcare) in the search query.\n"
-            "   - AUDIT YOUR CLAIMS: Before writing Paragraph 1, verify that every skill or industry you claim is literally written in the returned portfolio data, not copied from your search query or the job posting.\n"
+            "   - AUDIT YOUR CLAIMS: Before writing, verify that every skill or industry you claim is literally written in the returned portfolio data, not copied from your search query or the job posting.\n"
             "2. DIRECT TONE: Write in a clear, natural, impact-driven tone highlighting concrete achievements.\n"
             "3. NO PLACEHOLDERS: Never output bracketed placeholders like [Company Name] or [Current Company].\n\n"
             "OUTPUT FORMAT ROUTING:\n"

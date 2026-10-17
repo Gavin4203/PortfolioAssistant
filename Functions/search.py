@@ -1,7 +1,5 @@
-from RAG.pipeline import pipeline
+from RAG.pipeline import user_db
 from langchain_core.tools import tool
-
-user_db = pipeline()
 
 @tool
 def search_query(query: str):
