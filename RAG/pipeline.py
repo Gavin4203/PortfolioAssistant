@@ -31,18 +31,26 @@ class pipeline:
         self.index = VectorStoreIndex.from_vector_store(vector_store=self.vector_store)
 
         # turn the index into a Q&A engine
-        self.retriever = self.index.as_retriever(similarity_top_k = 5)
+        self.retriever = self.index.as_retriever(similarity_top_k =5)
 
     def search_portfolio(self, query):
         # LlamaIndex will embed, search, and generate a response here
         #returns a Python list of NodeWithScore objects, ordered from highest similarity score to lowest
         response = self.retriever.retrieve(query)
-        chunks = "\n\n---\n\n".join([res.get_content() for res in response])
+
+        labeled_chunks = []
+        for i, res in enumerate(response, 1):
+            source_file = res.metadata.get("file_name", f"Record {i}")
+            labeled_chunks.append(f"[RECORD #{i} (Source: {source_file})]:\n{res.get_content()}")
+
+        chunks = "\n\n---\n\n".join(labeled_chunks)
 
         return (
+            "=== CANDIDATE'S PAST PORTFOLIO & WORK HISTORY ===\n"
+            "(WARNING: Organizations listed below are where the candidate ALREADY worked in the past.\n"
+            "They are NOT the target employer!)\n\n"
             f"{chunks}\n\n"
-            "--- END OF PORTFOLIO DATA ---\n"
-            "Highlight the candidate's real projects above and connect them to the user's request."
+            "=== END OF CANDIDATE PAST HISTORY ==="
         )
 
     def data_pop(self, overwrite: bool):

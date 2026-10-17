@@ -8,6 +8,7 @@ from typing_extensions import TypedDict
 from langgraph.graph import StateGraph, START, END
 from langgraph.graph.message import add_messages
 from langchain_ollama import ChatOllama
+from langgraph.checkpoint.memory import MemorySaver
 from langchain_core.tools import tool
 from langgraph.prebuilt import ToolNode, tools_condition
 from langchain_core.messages import SystemMessage, HumanMessage
@@ -30,7 +31,7 @@ class agent:
             f"1. FACTUAL GROUNDING: Always look up {self.user_name}'s actual background, skills, and work history first using `search_query` before answering specific job questions, drafting cover letters, or building resumes.\n"
             f"   - When calling `search_query`, pass ONLY general portfolio terms like 'software engineering projects and work history'. NEVER include the employer's industry (like loans, finance, or healthcare) in the search query.\n"
             "   - AUDIT YOUR CLAIMS: Before writing, verify that every skill or industry you claim is literally written in the returned portfolio data, not copied from your search query or the job posting.\n"
-            "2. DIRECT TONE: Write in a clear, natural, impact-driven tone highlighting concrete achievements.\n"
+            "2. DIRECT TONE: Write in a clear, natural, impact-driven tone using complete, grammatically full sentences (convert any resume bullet fragments into full prose sentences).\n"
             "3. NO PLACEHOLDERS: Never output bracketed placeholders like [Company Name] or [Current Company].\n\n"
             "OUTPUT FORMAT ROUTING:\n"
             "- **General Questions / Job-Fit Ratings:** Reply normally in chat after searching.\n"
@@ -61,6 +62,9 @@ class agent:
         # any tools requested will append its results to the State
         tool_node = ToolNode(self.tools)
 
+        # give persistent memory
+        memory = MemorySaver()
+
         # build the graph
         workflow = StateGraph(State)
 
@@ -73,7 +77,7 @@ class agent:
 
         workflow.add_edge("tools", "agent")
 
-        return workflow.compile()
+        return workflow.compile(checkpointer=memory)
 
 
     def agent_node(self, state: State):
@@ -116,17 +120,22 @@ class agent:
                 letter_text = tag_match.group(1).strip()
                 cv.md_to_odt(letter_text)
                 response.content = f"{letter_text}"
+            elif "dear " in content.lower() and "sincerely" in content.lower():
+                # Fallback: If the LLM rewrote the letter but forgot <cover_letter> tags, catch it anyway!
+                save_status = cv.md_to_odt(content)
+                response.content = f"{content}\n\n[{save_status}]"
 
         return {"messages": [response]}
 
-    def speak_to_it(self, q):
+    def speak_to_it(self, q, thread_id: str = "current_session"):
+        config = {"configurable": {"thread_id": thread_id}}
         q_state = {
             "messages": [
                 HumanMessage(content=q),
             ]
         }
 
-        for event in self.app.stream(q_state, stream_mode="values"):
+        for event in self.app.stream(q_state, config=config, stream_mode="values"):
             last_message = event["messages"][-1]
             # print the class name and its contents
             print(f"{last_message.__class__.__name__}")
