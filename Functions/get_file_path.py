@@ -2,6 +2,8 @@ import subprocess
 import shutil
 import sys
 import os
+from pathlib import Path
+
 
 def get_linux_path(filename):
     if shutil.which("zenity"):
@@ -10,14 +12,27 @@ def get_linux_path(filename):
                 "zenity",
                 "--file-selection",
                 "--save",
-                "--file-filter= LibreOffice .odt | *.odt",
-                f"--filename={filename}",
-                "--title=Saving File"
+                f"--filename={filename}.odt",
+                "--title=Save Document As (Change extension for .odt, .pdf, .docx, .md)",
+                "--file-filter=Supported Documents (*.odt, *.docx, *.md, *.pdf) | *.odt *.docx *.md *.pdf",
+                "--file-filter=LibreOffice Writer (*.odt) | *.odt",
+                "--file-filter=Word Document (*.docx) | *.docx",
+                "--file-filter=Markdown (*.md) | *.md",
+                "--file-filter=PDF Document (*.pdf) | *.pdf",
             ],
             capture_output=True,
             text=True
         )
-        return res.stdout.strip() if res.returncode == 0 else None
+
+        if res.returncode != 0:
+            return None
+
+        path = res.stdout.strip()
+
+        if not Path(path).suffix:
+            path = f"{path}.odt"
+
+        return path
     else:
         return get_windows_mac_path()
 

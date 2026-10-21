@@ -1,6 +1,6 @@
 import ollama
 
-from Functions.cover_letter import cv
+from Functions.file_exporting import markdown_to_file
 from Functions.search import search_query
 
 from typing import Annotated
@@ -44,7 +44,25 @@ class agent:
             "  Sincerely,\n\n"
             f"  {self.user_name}\n"
             "  </cover_letter>\n\n"
-            "- **Resumes (Future Use):** When requested, wrap the resume inside `<resume>` and `</resume>` tags."
+            "- **Resumes:** Whenever the user asks to make, tailor, create, or update a resume, select the most relevant experience and projects from `search_query` and wrap the ENTIRE resume inside `<resume>` and `</resume>` tags using clean Markdown:\n"
+            "  <resume>\n"
+            f"  # {self.user_name}\n"
+            "  [Contact Info Line from resume—if not found in chunks, omit this line rather than writing a placeholder]\n\n"
+            "  ## EDUCATION\n"
+            "  **[Degree / Certification]** | [Institution] | [Graduation Date]\n\n"
+            "  ## EXPERIENCE\n"
+            "  ### [Role Title] | [Organization] | [Location] | [Dates]\n"
+            "  - [Action-verb bullet point: specific implementation and impact—NO pronouns like I/my/our]\n"
+            "  - [Action-verb bullet point: distinct responsibility or system built]\n"
+            "  - [Action-verb bullet point: measurable outcome or workflow managed]\n"
+            "  ## PROJECTS\n"
+            "  ### [Project Name] | [Tools / Technologies Used] | [Dates]\n"
+            "  - [Action-verb bullet point highlighting implementation and measurable results]\n"
+            "  - [Action-verb bullet point]\n\n"
+            "  ## SKILLS\n"
+            "  (CRITICAL: List ONLY hard skills explicitly named in the candidate's portfolio. Do NOT add if they are not in the portfolio, and NEVER include soft skills like Communication or Teamwork!)\n"
+            "  - **[Category Name]:** [Comma-separated verified tools]\n"
+            "  </resume>"
         )
 
         self.tools = [search_query]
@@ -110,19 +128,29 @@ class agent:
 
             # 4. Deterministic Python Post-Processor for Cover Letters
             content = response.content
-            tag_match = re.search(
+            cover_letter_match = re.search(
                 r"<cover_letter>(.*?)</cover_letter>",
                 content,
                 flags=re.DOTALL | re.IGNORECASE,
             )
 
-            if tag_match:
-                letter_text = tag_match.group(1).strip()
-                cv.md_to_odt(letter_text)
+            resume_match = re.search(
+                r"<resume>(.*?)</resume>",
+                content,
+                flags=re.DOTALL | re.IGNORECASE,
+            )
+
+            if cover_letter_match:
+                letter_text = cover_letter_match.group(1).strip()
+                markdown_to_file.export(letter_text, "cover_letter")
                 response.content = f"{letter_text}"
+            elif resume_match:
+                resume_text = resume_match.group(1).strip()
+                markdown_to_file.export(resume_text, "resume")
+                response.content = f"{resume_text}"
             elif "dear " in content.lower() and "sincerely" in content.lower():
                 # Fallback: If the LLM rewrote the letter but forgot <cover_letter> tags, catch it anyway!
-                save_status = cv.md_to_odt(content)
+                save_status = markdown_to_file.export(content, "cover_letter")
                 response.content = f"{content}\n\n[{save_status}]"
 
         return {"messages": [response]}

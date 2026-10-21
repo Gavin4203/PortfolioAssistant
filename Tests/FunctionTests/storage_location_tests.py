@@ -5,7 +5,7 @@ load_dotenv()
 
 import unittest
 from Functions.get_file_path import get_linux_path
-from Functions.cover_letter import cv
+from Functions.cover_letter import markdown_to_file as mtf
 
 class MyTestCase(unittest.TestCase):
     def test_get_linux_path(self):
@@ -19,11 +19,10 @@ class MyTestCase(unittest.TestCase):
 
     def test_odt_cover_letter(self):
         """Tests cover letter is saved correctly"""
-        cova_letta = cv()
         text = "Conversational Fluff.Exe Dear Hiring Manager\n\n\n\nI am pretty good at things, all the things really. You should hire me\n\n\n\n\n\n\n\n\n\nI am will be very good asset.\nSincerely\nA Cool Guy"
-        actual = cv.md_to_odt.invoke({"text": text})
+        actual = mtf.export(text, type="cover_letter")
 
-        expected = f"Cover Letter has been created and saved here: {os.environ['PATH_SELECTION_TEST']}.odt"
+        expected = f"Cover Letter has been created and saved here: {os.environ['PATH_SELECTION_TEST']}"
 
         self.assertEqual(expected, actual)
 
