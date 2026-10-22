@@ -7,3 +7,5 @@
 
 .idea/*
 Data/*
+.env
+__pycache__
