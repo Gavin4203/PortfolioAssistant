@@ -38,9 +38,9 @@ class agent:
             "- **Cover Letters:** Wrap the ENTIRE cover letter inside `<cover_letter>` and `</cover_letter>` tags using this structure:\n"
             "  <cover_letter>\n"
             "  Dear Hiring Manager,\n\n"
-            "  [Paragraph 1: Hook connecting the role and company to the candidate's verified core strengths]\n\n"
-            "  [Paragraph 2: Concrete projects and metrics from search_query]\n\n"
-            "  [Paragraph 3: Transferable work experience aligning with company mission and closing]\n\n"
+            "  [Paragraph 1: Hook connecting the role and company to the candidate's core strengths]\n\n"
+            "  [Paragraph 2: Highlight exactly ONE relevant project or role from the search results. Name the organization and detail the specific tech stack used there.]\n\n"
+            "  [Paragraph 3: Highlight a SECOND distinct project or role. Focus on transferable skills and close the letter.]\n\n"
             "  Sincerely,\n\n"
             f"  {self.user_name}\n"
             "  </cover_letter>\n\n"
@@ -124,8 +124,24 @@ class agent:
             active_llm = self.llm.bind_tools([search_query])
             response = active_llm.invoke([sys_msg] + messages)
         else:
+            latest_user_request = next(
+                (msg.content for msg in reversed(messages) if msg.type == "human"), ""
+            )
+
+            anchor_message = HumanMessage(
+                content=(
+                    f"REMINDER OF CURRENT USER REQUEST:\n{latest_user_request}\n\n"
+                    "CRITICAL CHECKS BEFORE WRITING:\n"
+                    "1. Keep each project and role from the portfolio separate—do not mix details or tech stacks between records.\n"
+                    "2. Never copy HR boilerplate phrases like 'one or more programming languages and related tools' from the job description.\n"
+                    "3. Do not use the pronoun 'I' or 'Our' in resume descriptions.\n"
+                    "4. WRAP YOUR RESPONSE IN TAGS.\n"
+                    "5. FOR RESUMES ONLY, Format EVERY description under EXPERIENCE and PROJECTS as a bulleted list starting with a dash ('- '). Do not write flat paragraphs."
+                    "6. REMEMBER TO AUDIT YOUR CLAIMS"
+                )
+            )
             # Zero tools bound = Zero JSON risk! Pure prose generation.
-            response = self.llm.invoke([sys_msg] + messages)
+            response = self.llm.invoke([sys_msg] + messages + [anchor_message])
 
             # 4. Deterministic Python Post-Processor for Cover Letters
             content = response.content
