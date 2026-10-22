@@ -53,6 +53,7 @@ class markdown_to_file:
                 clean_md,
                 suffix,
                 format='md',
+                extra_args=["--pdf-engine=weasyprint"],
                 outputfile=output
             )
 
