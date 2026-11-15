@@ -142,3 +142,6 @@ So: this repo has two working features and a gap where the third was going to be
 
 - The `Data/` directory is the parent folder for both your source documents (`USER_DATA`) and the local Qdrant vector store (`QDRANT_DATA`). It's in `.gitignore`. Don't un-ignore it. Point `USER_DATA` and `QDRANT_DATA` to subdirectories under it (e.g. `Data/documents/` and `Data/qdrant/`).
 - `zenity` is the only external binary dependency. Everything else is Python + Ollama + Qdrant.
+
+
+This work is dedicated to the public domain under [CC0](https://creativecommons.org/publicdomain/zero/1.0/).
