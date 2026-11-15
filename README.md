@@ -10,7 +10,7 @@ An LLM-powered tool that treats your own professional documents, resume, cover l
 
 **Cover-letter drafting agent.** You paste in a job description, and a LangGraph agent loops: pulls matching skills and experience from your vector store, drafts a targeted pitch, and lets you iterate. It's not "write me a generic cover letter." It's "here's what you did that maps to this role."
 
-**Output is CLI-first with a save dialog.** The whole flow is a terminal session. When the agent produces a final document, the code extracts the clean text and opens a save dialog so you can drop it wherever you want (see [Usage](#usage) for the full flow). You can also export to PDF (WeasyPrint), `.odt`, `.docx`, or `.md` depending on what you ask for.
+**Output is CLI-first with a save dialog.** The whole flow is a terminal session. When the agent produces a final document, the code extracts the clean text and opens a save dialog so you can drop it wherever you want. You can also export to PDF (WeasyPrint), `.odt`, `.docx`, or `.md` depending on what you ask for.
 
 ## Model
 
@@ -22,7 +22,7 @@ Designed and tested against `llama3.2:8b` running locally via Ollama. The RAG re
 
 - Python 3.11+
 - [Ollama](https://ollama.com) running locally with your LLM and embedding model pulled
-- `zenity` (Linux only): the output-save dialog — optional if you only need terminal output (see [Usage](#usage))
+- `zenity` (Linux only): the output-save dialog — optional if you only need terminal output
 
 Qdrant runs as a local, file-based store via the `qdrant-client` pip package, your vectors live in a directory you point it at, and that's it.
 
